@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -9,28 +10,30 @@
     </script>
     <style>
         :root {
-            --primary: #4f46e5;
-            --primary-dark: #4338ca;
-            --primary-light: #eef2ff;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #eff6ff;
             --buy-color: #2563eb;
             --sell-color: #ea580c;
-            --bg: #f8fafc;
+            --bg: #f1f5f9;
             --card-bg: #ffffff;
-            --text: #1e293b;
-            --text-secondary: #64748b;
+            --text: #0f172a;
+            --text-secondary: #475569;
             --text-muted: #94a3b8;
             --border: #e2e8f0;
-            --radius: 20px;
-            --radius-sm: 12px;
+            --border-light: #f1f5f9;
             --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
-            --shadow: 0 4px 6px -1px rgba(0,0,0,0.06),0 2px 4px -2px rgba(0,0,0,0.04);
-            --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.08),0 8px 10px -6px rgba(0,0,0,0.04);
+            --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.04);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.06), 0 4px 6px rgba(0,0,0,0.04);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --radius-xs: 8px;
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
         body {
-            background: linear-gradient(180deg, #f1f5f9 0%, #e8ecf1 100%);
+            background: var(--bg);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
             color: var(--text);
             min-height: 100vh;
@@ -38,81 +41,79 @@
             -webkit-font-smoothing: antialiased;
         }
         .app-header {
-            background: rgba(255,255,255,0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(226,232,240,0.8);
-            padding: 14px 0;
+            background: #ffffff;
+            border-bottom: 1px solid var(--border);
+            padding: 16px 0;
             position: sticky;
             top: 0;
             z-index: 100;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            backdrop-filter: blur(10px);
         }
         .app-header .logo {
             display: flex;
             align-items: center;
             gap: 12px;
             font-weight: 700;
-            font-size: 1.2rem;
+            font-size: 1.15rem;
             color: var(--text);
             text-decoration: none;
             letter-spacing: -0.3px;
         }
         .app-header .logo .icon-circle {
-            width: 44px;
-            height: 44px;
-            border-radius: 14px;
-            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
             display: flex;
             align-items: center;
             justify-content: center;
             color: #fff;
             font-size: 1.3rem;
-            box-shadow: 0 4px 12px rgba(79,70,229,0.3);
+            box-shadow: 0 2px 8px rgba(37,99,235,0.3);
         }
         .card {
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             box-shadow: var(--shadow-sm);
-            margin-bottom: 22px;
+            margin-bottom: 20px;
             overflow: hidden;
-            transition: all 0.25s ease;
+            transition: box-shadow var(--transition);
         }
         .card:hover {
-            box-shadow: var(--shadow-lg);
-            border-color: #cbd5e1;
+            box-shadow: var(--shadow);
         }
         .card-header {
             background: #fafbfc;
             border-bottom: 1px solid var(--border);
-            padding: 18px 24px;
-            font-weight: 650;
-            font-size: 0.95rem;
+            padding: 16px 22px;
+            font-weight: 600;
+            font-size: 0.92rem;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             color: var(--text);
             letter-spacing: -0.2px;
         }
         .card-body {
-            padding: 24px;
+            padding: 22px;
         }
         .upload-zone {
-            border: 2.5px dashed #cbd5e1;
-            border-radius: 18px;
-            padding: 44px 24px;
+            border: 2px dashed #cbd5e1;
+            border-radius: var(--radius);
+            padding: 38px 20px;
             text-align: center;
             cursor: pointer;
-            background: #fafbfd;
-            transition: all 0.3s ease;
+            background: #fafbfc;
+            transition: all var(--transition);
             position: relative;
         }
         .upload-zone:hover,
         .upload-zone.drag-over {
             border-color: var(--primary);
-            background: #f5f3ff;
-            box-shadow: 0 0 0 8px rgba(79,70,229,0.05);
-            transform: translateY(-1px);
+            background: #f0f5ff;
+            box-shadow: 0 0 0 6px rgba(37,99,235,0.04);
         }
         .upload-zone.has-file {
             border-color: #10b981;
@@ -120,25 +121,24 @@
             border-style: solid;
         }
         .upload-zone .upload-icon {
-            font-size: 3.2rem;
+            font-size: 2.8rem;
             color: #94a3b8;
-            margin-bottom: 12px;
-            transition: all 0.3s ease;
+            margin-bottom: 8px;
+            transition: color var(--transition);
         }
         .upload-zone.has-file .upload-icon {
             color: #10b981;
-            transform: scale(1.05);
         }
         .upload-zone .upload-text {
             font-weight: 600;
-            color: #475569;
-            font-size: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
             letter-spacing: -0.2px;
         }
         .upload-zone .upload-hint {
-            font-size: 0.82rem;
-            color: #94a3b8;
-            margin-top: 6px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 4px;
         }
         .upload-zone input[type="file"] {
             position: absolute;
@@ -150,12 +150,12 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-top: 16px;
-            padding: 14px 18px;
+            margin-top: 14px;
+            padding: 12px 16px;
             background: #f0fdf4;
-            border-radius: 12px;
+            border-radius: var(--radius-xs);
             font-weight: 500;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             flex-wrap: wrap;
             border: 1px solid #bbf7d0;
         }
@@ -164,12 +164,12 @@
             cursor: pointer;
             background: #fee2e2;
             border: 1px solid #fecaca;
-            color: #b91c1c;
-            padding: 6px 16px;
-            border-radius: 10px;
+            color: #991b1b;
+            padding: 5px 14px;
+            border-radius: var(--radius-xs);
             font-weight: 600;
-            font-size: 0.8rem;
-            transition: all 0.2s ease;
+            font-size: 0.78rem;
+            transition: all var(--transition);
         }
         .file-info-box .remove-btn:hover {
             background: #fecaca;
@@ -179,21 +179,21 @@
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            margin-top: 14px;
+            margin-top: 12px;
         }
         .filter-chip {
             display: inline-flex;
             align-items: center;
             gap: 5px;
-            padding: 6px 16px;
-            border-radius: 22px;
-            font-size: 0.8rem;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.78rem;
             font-weight: 600;
             letter-spacing: -0.1px;
         }
         .filter-chip.buy {
             background: #dbeafe;
-            color: #1e40af;
+            color: #1d4ed8;
         }
         .filter-chip.sell {
             background: #fff7ed;
@@ -209,77 +209,74 @@
             display: flex;
             align-items: center;
             background: #f8fafc;
-            border-radius: 32px;
-            padding: 6px 10px 6px 20px;
-            gap: 10px;
+            border-radius: 30px;
+            padding: 5px 8px 5px 18px;
+            gap: 8px;
             border: 2px solid #e2e8f0;
-            transition: all 0.25s ease;
+            transition: all var(--transition);
         }
         .price-chip:focus-within {
             border-color: var(--primary);
             background: #fff;
-            box-shadow: 0 0 0 5px rgba(79,70,229,0.08);
-            transform: translateY(-1px);
+            box-shadow: 0 0 0 4px rgba(37,99,235,0.08);
         }
         .price-chip label {
             font-weight: 600;
-            font-size: 0.85rem;
+            font-size: 0.84rem;
             white-space: nowrap;
             margin: 0;
             color: var(--text);
         }
         .price-chip input {
-            width: 108px;
+            width: 105px;
             border: none;
             background: #fff;
-            border-radius: 22px;
-            padding: 8px 16px;
-            font-size: 0.9rem;
+            border-radius: 20px;
+            padding: 7px 14px;
+            font-size: 0.88rem;
             font-weight: 500;
             text-align: center;
             outline: none;
             color: var(--text);
             border: 1px solid #e2e8f0;
-            transition: all 0.2s ease;
         }
         .price-chip input:focus {
             border-color: var(--primary);
         }
         .summary-date {
             text-align: center;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             font-weight: 700;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             color: var(--text);
             letter-spacing: -0.2px;
         }
         .table-container {
             overflow-x: auto;
-            border-radius: 14px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            border-radius: var(--radius-xs);
+            border: 1px solid var(--border);
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.82rem;
+            font-size: 0.8rem;
         }
         thead th {
             background: #f8fafc;
-            font-weight: 650;
-            font-size: 0.74rem;
-            color: #475569;
-            padding: 12px 12px;
+            font-weight: 600;
+            font-size: 0.73rem;
+            color: var(--text-secondary);
+            padding: 11px 10px;
             border-bottom: 2px solid #e2e8f0;
             white-space: nowrap;
             letter-spacing: -0.1px;
             text-transform: uppercase;
         }
         tbody td {
-            padding: 11px 12px;
-            border-bottom: 1px solid #f1f5f9;
+            padding: 10px;
+            border-bottom: 1px solid var(--border-light);
             white-space: nowrap;
-            font-size: 0.82rem;
+            font-size: 0.8rem;
         }
         tbody tr:last-child td {
             border-bottom: none;
@@ -288,54 +285,54 @@
             background: #fafcfd;
         }
         .btn {
-            border-radius: 12px;
+            border-radius: var(--radius-xs);
             font-weight: 600;
-            padding: 11px 24px;
-            transition: all 0.25s ease;
+            padding: 10px 22px;
+            transition: all var(--transition);
             letter-spacing: -0.2px;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
         }
         .btn-primary {
-            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            background: var(--primary);
             border: none;
             color: #fff;
-            box-shadow: 0 4px 14px rgba(79,70,229,0.3);
+            box-shadow: 0 2px 6px rgba(37,99,235,0.25);
         }
         .btn-primary:hover {
-            background: linear-gradient(135deg, #4f46e5, #4338ca);
-            box-shadow: 0 6px 20px rgba(79,70,229,0.4);
-            transform: translateY(-2px);
+            background: var(--primary-dark);
+            box-shadow: 0 4px 12px rgba(37,99,235,0.35);
+            transform: translateY(-1px);
         }
         .btn-outline {
             border: 2px solid #e2e8f0;
             background: #fff;
-            color: #475569;
+            color: var(--text-secondary);
         }
         .btn-outline:hover {
             border-color: #cbd5e1;
             background: #f8fafc;
-            color: #1e293b;
+            color: var(--text);
         }
         .btn-success {
-            background: linear-gradient(135deg, #34d399, #10b981);
+            background: #10b981;
             border: none;
             color: #fff;
-            box-shadow: 0 4px 14px rgba(16,185,129,0.3);
+            box-shadow: 0 2px 6px rgba(16,185,129,0.25);
         }
         .btn-success:hover {
-            background: linear-gradient(135deg, #10b981, #059669);
-            box-shadow: 0 6px 20px rgba(16,185,129,0.4);
-            transform: translateY(-2px);
+            background: #059669;
+            box-shadow: 0 4px 12px rgba(16,185,129,0.35);
+            transform: translateY(-1px);
         }
         .btn-sm {
-            padding: 8px 16px;
-            font-size: 0.82rem;
-            border-radius: 10px;
+            padding: 7px 14px;
+            font-size: 0.8rem;
+            border-radius: 7px;
         }
         .btn-lg {
-            padding: 14px 32px;
-            font-size: 1rem;
-            border-radius: 14px;
+            padding: 13px 30px;
+            font-size: 0.95rem;
+            border-radius: 10px;
         }
         .toast-container {
             position: fixed;
@@ -355,18 +352,18 @@
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            gap: 14px;
-            backdrop-filter: blur(4px);
+            gap: 12px;
+            backdrop-filter: blur(2px);
         }
         .spinner-overlay.show {
             display: flex;
         }
         .col-select-area {
             background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 14px 18px;
-            margin-top: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xs);
+            padding: 12px 16px;
+            margin-top: 10px;
             display: flex;
             align-items: center;
             gap: 12px;
@@ -382,80 +379,76 @@
             color: #eab308;
         }
         .proprietary-input {
-            width: 82px;
+            width: 80px;
             text-align: center;
-            padding: 7px;
+            padding: 6px;
             border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 0.84rem;
-            transition: all 0.2s ease;
+            border-radius: var(--radius-xs);
+            font-size: 0.82rem;
+            transition: all var(--transition);
             outline: none;
-            background: #fff;
         }
         .proprietary-input:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(79,70,229,0.08);
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.08);
         }
         .chart-container {
             position: relative;
             width: 100%;
-            min-height: 290px;
-            margin-bottom: 20px;
+            min-height: 280px;
+            margin-bottom: 18px;
         }
         .chart-row {
             display: flex;
             flex-wrap: wrap;
-            gap: 22px;
+            gap: 20px;
         }
         .chart-box {
-            flex: 1 1 47%;
-            min-width: 350px;
+            flex: 1 1 46%;
+            min-width: 340px;
             background: #fff;
-            border-radius: 16px;
-            padding: 20px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-            transition: all 0.2s ease;
-        }
-        .chart-box:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            border-radius: var(--radius-sm);
+            padding: 18px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
         }
         .chart-box h6 {
-            font-weight: 650;
+            font-weight: 600;
             color: var(--text);
             letter-spacing: -0.2px;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
         }
         .nav-tabs {
-            border-bottom: 2px solid #e2e8f0;
-            gap: 6px;
+            border-bottom: 2px solid var(--border);
+            gap: 4px;
         }
         .nav-tabs .nav-link {
             border: none;
-            border-radius: 12px 12px 0 0;
-            padding: 12px 22px;
+            border-radius: var(--radius-xs) var(--radius-xs) 0 0;
+            padding: 10px 20px;
             font-weight: 500;
-            font-size: 0.86rem;
-            color: #64748b;
-            transition: all 0.2s ease;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            transition: all var(--transition);
             letter-spacing: -0.1px;
         }
         .nav-tabs .nav-link:hover {
-            color: #1e293b;
+            color: var(--text);
             background: #f8fafc;
         }
         .nav-tabs .nav-link.active {
             color: var(--primary);
             background: transparent;
             border-bottom: 3px solid var(--primary);
-            font-weight: 650;
+            font-weight: 600;
         }
         .badge {
             font-weight: 600;
-            font-size: 0.72rem;
-            padding: 5px 10px;
-            border-radius: 8px;
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            border-radius: 6px;
         }
+        /* 响应式 */
         @media (max-width: 768px) {
             .chart-box {
                 min-width: 100%;
@@ -467,7 +460,7 @@
                 font-size: 1rem;
             }
             .btn-lg {
-                padding: 12px 26px;
+                padding: 12px 24px;
             }
         }
     </style>
@@ -563,21 +556,37 @@
                 </div>
             </div>
 
+            <!-- 历史趋势分析 -->
             <div class="card mt-4" id="historyCard">
                 <div class="card-header">📈 历史趋势分析
                     <button class="btn btn-outline btn-sm ms-auto" onclick="clearHistory()">🗑 清除历史数据</button>
                 </div>
                 <div class="card-body">
                     <div class="chart-row">
-                        <div class="chart-box"><h6 class="text-center">累计未交货量趋势</h6><div class="chart-container"><canvas id="chartUnfilled"></canvas></div></div>
-                        <div class="chart-box"><h6 class="text-center">单日实际观察量趋势</h6><div class="chart-container"><canvas id="chartActual"></canvas></div></div>
+                        <div class="chart-box">
+                            <h6 class="text-center">累计未交货量趋势</h6>
+                            <div class="chart-container"><canvas id="chartUnfilled"></canvas></div>
+                        </div>
+                        <div class="chart-box">
+                            <h6 class="text-center">单日实际观察量趋势</h6>
+                            <div class="chart-container"><canvas id="chartActual"></canvas></div>
+                        </div>
                     </div>
                     <div class="chart-row">
-                        <div class="chart-box"><h6 class="text-center">自营剩余持仓量趋势</h6><div class="chart-container"><canvas id="chartProp"></canvas></div></div>
-                        <div class="chart-box"><h6 class="text-center">一口价期单趋势</h6><div class="chart-container"><canvas id="chartFixedPrice"></canvas></div></div>
+                        <div class="chart-box">
+                            <h6 class="text-center">自营剩余持仓量趋势</h6>
+                            <div class="chart-container"><canvas id="chartProp"></canvas></div>
+                        </div>
+                        <div class="chart-box">
+                            <h6 class="text-center">一口价期单趋势</h6>
+                            <div class="chart-container"><canvas id="chartFixedPrice"></canvas></div>
+                        </div>
                     </div>
                     <div class="chart-row">
-                        <div class="chart-box"><h6 class="text-center">预警触发统计趋势</h6><div class="chart-container"><canvas id="chartWarnings"></canvas></div></div>
+                        <div class="chart-box">
+                            <h6 class="text-center">预警触发统计趋势</h6>
+                            <div class="chart-container"><canvas id="chartWarnings"></canvas></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -997,75 +1006,180 @@
                 if (proprietarySellData) renderProprietaryTable('propSellTable', proprietarySellData, false, prices, '累沽自营业务汇总', '场外上沿（双倍触发价）');
             };
 
-            function getHistoryData() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch(e) { return []; } }
-            function saveHistoryData(data) { localStorage.setItem(HISTORY_KEY, JSON.stringify(data)); }
+            // ==================== 数据存储与图表 ====================
+            function getHistoryData() {
+                try {
+                    const raw = localStorage.getItem(HISTORY_KEY);
+                    return raw ? JSON.parse(raw) : [];
+                } catch(e) { return []; }
+            }
+
+            function saveHistoryData(dataArray) {
+                localStorage.setItem(HISTORY_KEY, JSON.stringify(dataArray));
+            }
 
             window.saveTodayData = function() {
                 if (!lastCalc) { showToast('请先完成计算','warning'); return; }
                 const today = new Date().toISOString().slice(0,10);
                 const history = getHistoryData();
+
+                // 检查是否已存在
                 const existingIdx = history.findIndex(h => h.date === today);
-                if (existingIdx >= 0) { if (!confirm(`日期 ${today} 的数据已存在，是否覆盖？`)) return; history.splice(existingIdx, 1); }
+                if (existingIdx >= 0) {
+                    if (!confirm(`日期 ${today} 的数据已存在，是否覆盖？`)) return;
+                    history.splice(existingIdx, 1);
+                }
+
                 const buy = lastCalc.buyRes, sell = lastCalc.sellRes, warnings = lastCalc.warnings;
                 const fp = fixedPriceData;
+
+                // 计算自营汇总
                 let propBuyTotalRemain = 0, propSellTotalRemain = 0;
-                if (proprietaryBuyData) { const buySummary = computeProprietarySummary(proprietaryBuyData, true, lastCalc.prices); if (buySummary) Object.values(buySummary).forEach(d => propBuyTotalRemain += d.todayRemain); }
-                if (proprietarySellData) { const sellSummary = computeProprietarySummary(proprietarySellData, false, lastCalc.prices); if (sellSummary) Object.values(sellSummary).forEach(d => propSellTotalRemain += d.todayRemain); }
+                if (proprietaryBuyData) {
+                    const buySummary = computeProprietarySummary(proprietaryBuyData, true, lastCalc.prices);
+                    if (buySummary) Object.values(buySummary).forEach(d => propBuyTotalRemain += d.todayRemain);
+                }
+                if (proprietarySellData) {
+                    const sellSummary = computeProprietarySummary(proprietarySellData, false, lastCalc.prices);
+                    if (sellSummary) Object.values(sellSummary).forEach(d => propSellTotalRemain += d.todayRemain);
+                }
+
+                // 预警统计
                 let buyDoubleTotal = 0, buyMeltTotal = 0, sellDoubleTotal = 0, sellMeltTotal = 0;
                 warnings.buyDouble.forEach(b => buyDoubleTotal += b.count);
                 warnings.buyMelt.forEach(b => buyMeltTotal += b.count);
                 warnings.sellDouble.forEach(b => sellDoubleTotal += b.count);
                 warnings.sellMelt.forEach(b => sellMeltTotal += b.count);
+
                 const record = {
-                    date: today, buyUnfilled: buy.totalUnfilled, sellUnfilled: sell.totalUnfilled,
-                    buyActualDaily: buy.totalActual, sellActualDaily: sell.totalActual,
-                    buyTheoretical: buy.totalTheoretical, sellTheoretical: sell.totalTheoretical,
-                    buyDoubleIncrement: buy.totalDoubleIncrement, sellDoubleIncrement: sell.totalDoubleIncrement,
-                    buyRemainObs: buy.totalRemain, sellRemainObs: sell.totalRemain,
-                    fixedPriceUnfilled: fp.totalUnfilled, fixedPriceTotalQty: fp.totalObservation, fixedPriceCount: fp.count,
-                    propBuyTotalRemain, propSellTotalRemain, buyDoubleTotal, buyMeltTotal, sellDoubleTotal, sellMeltTotal,
+                    date: today,
+                    buyUnfilled: buy.totalUnfilled,
+                    sellUnfilled: sell.totalUnfilled,
+                    buyActualDaily: buy.totalActual,
+                    sellActualDaily: sell.totalActual,
+                    buyTheoretical: buy.totalTheoretical,
+                    sellTheoretical: sell.totalTheoretical,
+                    buyDoubleIncrement: buy.totalDoubleIncrement,
+                    sellDoubleIncrement: sell.totalDoubleIncrement,
+                    buyRemainObs: buy.totalRemain,
+                    sellRemainObs: sell.totalRemain,
+                    fixedPriceUnfilled: fp.totalUnfilled,
+                    fixedPriceTotalQty: fp.totalObservation,
+                    fixedPriceCount: fp.count,
+                    propBuyTotalRemain,
+                    propSellTotalRemain,
+                    buyDoubleTotal,
+                    buyMeltTotal,
+                    sellDoubleTotal,
+                    sellMeltTotal,
                     totalPropRemain: propBuyTotalRemain + propSellTotalRemain,
                 };
-                history.push(record); history.sort((a,b) => a.date.localeCompare(b.date));
-                saveHistoryData(history); showToast(`今日数据已保存！(共${history.length}条记录)`,'success'); renderCharts(history);
+
+                history.push(record);
+                // 按日期排序
+                history.sort((a, b) => a.date.localeCompare(b.date));
+                saveHistoryData(history);
+                showToast(`今日数据已保存！(共${history.length}条记录)`,'success');
+                renderCharts(history);
             };
 
             function renderCharts(history) {
                 if (!history || history.length === 0) return;
-                const labels = history.map(h => h.date.slice(5));
-                Object.values(chartInstances).forEach(c => c.destroy()); chartInstances = {};
+                const labels = history.map(h => h.date.slice(5)); // MM-DD 格式
+
+                // 销毁旧图表
+                Object.values(chartInstances).forEach(c => c.destroy());
+                chartInstances = {};
+
+                // 图表1：累计未交货量
                 const ctx1 = document.getElementById('chartUnfilled').getContext('2d');
-                chartInstances.chart1 = new Chart(ctx1, { type: 'line', data: { labels, datasets: [
-                    { label: '累购', data: history.map(h => h.buyUnfilled), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.1)', tension: 0.3, fill: true },
-                    { label: '累沽', data: history.map(h => h.sellUnfilled), borderColor: '#ea580c', backgroundColor: 'rgba(234,88,12,0.1)', tension: 0.3, fill: true }
-                ] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: false } } } });
+                chartInstances.chart1 = new Chart(ctx1, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [
+                            { label: '累购', data: history.map(h => h.buyUnfilled), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.1)', tension: 0.3, fill: true },
+                            { label: '累沽', data: history.map(h => h.sellUnfilled), borderColor: '#ea580c', backgroundColor: 'rgba(234,88,12,0.1)', tension: 0.3, fill: true }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: false } } }
+                });
+
+                // 图表2：单日实际观察量
                 const ctx2 = document.getElementById('chartActual').getContext('2d');
-                chartInstances.chart2 = new Chart(ctx2, { type: 'line', data: { labels, datasets: [
-                    { label: '累购', data: history.map(h => h.buyActualDaily), borderColor: '#2563eb', tension: 0.3 },
-                    { label: '累沽', data: history.map(h => h.sellActualDaily), borderColor: '#ea580c', tension: 0.3 }
-                ] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: false } } } });
+                chartInstances.chart2 = new Chart(ctx2, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [
+                            { label: '累购', data: history.map(h => h.buyActualDaily), borderColor: '#2563eb', tension: 0.3 },
+                            { label: '累沽', data: history.map(h => h.sellActualDaily), borderColor: '#ea580c', tension: 0.3 }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: false } } }
+                });
+
+                // 图表3：自营剩余持仓量
                 const ctx3 = document.getElementById('chartProp').getContext('2d');
-                chartInstances.chart3 = new Chart(ctx3, { type: 'line', data: { labels, datasets: [
-                    { label: '累购自营', data: history.map(h => h.propBuyTotalRemain), borderColor: '#2563eb', tension: 0.3 },
-                    { label: '累沽自营', data: history.map(h => h.propSellTotalRemain), borderColor: '#ea580c', tension: 0.3 },
-                    { label: '自营总计', data: history.map(h => h.totalPropRemain), borderColor: '#059669', tension: 0.3, borderDash: [5,5] }
-                ] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: false } } } });
+                chartInstances.chart3 = new Chart(ctx3, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [
+                            { label: '累购自营', data: history.map(h => h.propBuyTotalRemain), borderColor: '#2563eb', tension: 0.3 },
+                            { label: '累沽自营', data: history.map(h => h.propSellTotalRemain), borderColor: '#ea580c', tension: 0.3 },
+                            { label: '自营总计', data: history.map(h => h.totalPropRemain), borderColor: '#059669', tension: 0.3, borderDash: [5,5] }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: false } } }
+                });
+
+                // 图表4：一口价期单
                 const ctx4 = document.getElementById('chartFixedPrice').getContext('2d');
-                chartInstances.chart4 = new Chart(ctx4, { type: 'line', data: { labels, datasets: [
-                    { label: '累计未交货量', data: history.map(h => h.fixedPriceUnfilled), borderColor: '#7c3aed', tension: 0.3 },
-                    { label: '累计合同量', data: history.map(h => h.fixedPriceTotalQty), borderColor: '#059669', tension: 0.3 }
-                ] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: false } } } });
+                chartInstances.chart4 = new Chart(ctx4, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [
+                            { label: '累计未交货量', data: history.map(h => h.fixedPriceUnfilled), borderColor: '#7c3aed', tension: 0.3 },
+                            { label: '累计合同量', data: history.map(h => h.fixedPriceTotalQty), borderColor: '#059669', tension: 0.3 }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: false } } }
+                });
+
+                // 图表5：预警触发统计
                 const ctx5 = document.getElementById('chartWarnings').getContext('2d');
-                chartInstances.chart5 = new Chart(ctx5, { type: 'line', data: { labels, datasets: [
-                    { label: '累购双倍', data: history.map(h => h.buyDoubleTotal), borderColor: '#f59e0b', tension: 0.3 },
-                    { label: '累购熔断', data: history.map(h => h.buyMeltTotal), borderColor: '#dc2626', tension: 0.3 },
-                    { label: '累沽双倍', data: history.map(h => h.sellDoubleTotal), borderColor: '#eab308', tension: 0.3 },
-                    { label: '累沽熔断', data: history.map(h => h.sellMeltTotal), borderColor: '#ef4444', tension: 0.3 }
-                ] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } });
+                chartInstances.chart5 = new Chart(ctx5, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [
+                            { label: '累购双倍', data: history.map(h => h.buyDoubleTotal), borderColor: '#f59e0b', tension: 0.3 },
+                            { label: '累购熔断', data: history.map(h => h.buyMeltTotal), borderColor: '#dc2626', tension: 0.3 },
+                            { label: '累沽双倍', data: history.map(h => h.sellDoubleTotal), borderColor: '#eab308', tension: 0.3 },
+                            { label: '累沽熔断', data: history.map(h => h.sellMeltTotal), borderColor: '#ef4444', tension: 0.3 }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+                });
             }
 
-            window.clearHistory = function() { if (confirm('确定要清除所有历史数据吗？此操作不可恢复！')) { localStorage.removeItem(HISTORY_KEY); Object.values(chartInstances).forEach(c => c.destroy()); chartInstances = {}; showToast('历史数据已清除','info'); } };
-            function loadAndRenderCharts() { const history = getHistoryData(); if (history.length > 0) renderCharts(history); }
+            window.clearHistory = function() {
+                if (confirm('确定要清除所有历史数据吗？此操作不可恢复！')) {
+                    localStorage.removeItem(HISTORY_KEY);
+                    Object.values(chartInstances).forEach(c => c.destroy());
+                    chartInstances = {};
+                    showToast('历史数据已清除','info');
+                }
+            };
+
+            function loadAndRenderCharts() {
+                const history = getHistoryData();
+                if (history.length > 0) {
+                    renderCharts(history);
+                }
+            }
 
             window.calculate = function() {
                 const {prices, allFilled} = getClosePrices();
@@ -1074,8 +1188,14 @@
                 setTimeout(() => {
                     let buyRes = { totalActual:0, totalTheoretical:0, totalDoubleIncrement:0, details:[], totalUnfilled:0, totalRemain:0 };
                     let sellRes = { ...buyRes };
-                    if (filteredBuyData.length) { const r = calcTheory(filteredBuyData, '_down', (p,t) => p<=t, prices); buyRes = {...r, totalUnfilled: filteredBuyData.reduce((s,x)=>s+getNumeric(x._unfilled),0), totalRemain: filteredBuyData.reduce((s,x)=>s+getNumeric(x._remain),0)}; }
-                    if (filteredSellData.length) { const r = calcTheory(filteredSellData, '_up', (p,t) => p>=t, prices); sellRes = {...r, totalUnfilled: filteredSellData.reduce((s,x)=>s+getNumeric(x._unfilled),0), totalRemain: filteredSellData.reduce((s,x)=>s+getNumeric(x._remain),0)}; }
+                    if (filteredBuyData.length) {
+                        const r = calcTheory(filteredBuyData, '_down', (p,t) => p<=t, prices);
+                        buyRes = {...r, totalUnfilled: filteredBuyData.reduce((s,x)=>s+getNumeric(x._unfilled),0), totalRemain: filteredBuyData.reduce((s,x)=>s+getNumeric(x._remain),0)};
+                    }
+                    if (filteredSellData.length) {
+                        const r = calcTheory(filteredSellData, '_up', (p,t) => p>=t, prices);
+                        sellRes = {...r, totalUnfilled: filteredSellData.reduce((s,x)=>s+getNumeric(x._unfilled),0), totalRemain: filteredSellData.reduce((s,x)=>s+getNumeric(x._remain),0)};
+                    }
                     if (globalWb) parseProprietarySheet(globalWb);
                     const warnings = computeWarnings();
                     lastCalc = {buyRes, sellRes, warnings, prices};
@@ -1086,7 +1206,8 @@
                     document.getElementById('btnExport').style.display = 'inline-block';
                     document.getElementById('btnSaveData').style.display = 'inline-block';
                     document.getElementById('calcTime').textContent = new Date().toLocaleString();
-                    savePrices(); loadAndRenderCharts();
+                    savePrices();
+                    loadAndRenderCharts();
                 }, 100);
             };
 
@@ -1098,11 +1219,16 @@
                     <tr style="background:#eff6ff"><td><strong>累购</strong></td><td>${buy.totalUnfilled.toFixed(2)}</td><td>${buy.totalRemain.toFixed(2)}</td><td class="fw-bold">${buy.totalActual.toFixed(2)}</td><td>${buy.totalTheoretical.toFixed(2)}</td><td class="${buy.totalDoubleIncrement>0?'text-warning fw-bold':''}">${buy.totalDoubleIncrement.toFixed(2)}</td></tr>
                     <tr style="background:#fff7ed"><td><strong>累沽</strong></td><td>${sell.totalUnfilled.toFixed(2)}</td><td>${sell.totalRemain.toFixed(2)}</td><td class="fw-bold">${sell.totalActual.toFixed(2)}</td><td>${sell.totalTheoretical.toFixed(2)}</td><td class="${sell.totalDoubleIncrement>0?'text-warning fw-bold':''}">${sell.totalDoubleIncrement.toFixed(2)}</td></tr>`;
                 const fp = fixedPriceData;
-                document.getElementById('fixedPriceSummaryArea').innerHTML = fp.count > 0 ? `<div class="table-container mt-2"><table class="table"><thead><tr><th>业务类型</th><th>累计未交货量(吨)</th><th>累计合同量(吨)</th><th>执行中单数</th></tr></thead><tbody><tr style="background:#f3e8ff;"><td><strong>一口价期单</strong></td><td>${fp.totalUnfilled.toFixed(2)}</td><td>${fp.totalObservation.toFixed(2)}</td><td>${fp.count}</td></tr></tbody></table></div>` : '<div class="text-muted small mt-2">未检测到一口价期单数据</div>';
+                document.getElementById('fixedPriceSummaryArea').innerHTML = fp.count > 0 ? `
+                    <div class="table-container mt-2"><table class="table"><thead><tr><th>业务类型</th><th>累计未交货量(吨)</th><th>累计合同量(吨)</th><th>执行中单数</th></tr></thead>
+                    <tbody><tr style="background:#f3e8ff;"><td><strong>一口价期单</strong></td><td>${fp.totalUnfilled.toFixed(2)}</td><td>${fp.totalObservation.toFixed(2)}</td><td>${fp.count}</td></tr></tbody></table></div>` : '<div class="text-muted small mt-2">未检测到一口价期单数据</div>';
                 const renderWarn = (tableId, data) => {
                     if (!data.length) { document.getElementById(tableId).innerHTML = '<thead></thead><tbody><tr><td colspan="7" class="text-center text-muted">暂无数据</td></tr></tbody>'; return; }
                     let html = '<tr><th>价格区间</th><th>新增</th><th>累计合约</th><th>累计影响(吨)</th><th>累计后实际单日观察量（吨）</th><th>累计剩余观察量(吨)</th><th>具体触发价格</th></tr>';
-                    data.forEach(d => { const imp = d.cumulativeImpact >= 0 ? `+${d.cumulativeImpact.toFixed(2)}` : d.cumulativeImpact.toFixed(2); html += `<tr><td>${d.range}</td><td>${d.count}</td><td class="fw-bold">${d.cumulativeCount}</td><td class="${d.cumulativeImpact>=0?'text-bright-yellow fw-bold':'text-danger fw-bold'}">${imp}</td><td class="fw-bold">${d.actualTotal.toFixed(2)}</td><td class="fw-bold">${d.cumulativeRemain.toFixed(2)}</td><td style="font-size:0.75rem;">${d.prices}</td></tr>`; });
+                    data.forEach(d => {
+                        const imp = d.cumulativeImpact >= 0 ? `+${d.cumulativeImpact.toFixed(2)}` : d.cumulativeImpact.toFixed(2);
+                        html += `<tr><td>${d.range}</td><td>${d.count}</td><td class="fw-bold">${d.cumulativeCount}</td><td class="${d.cumulativeImpact>=0?'text-bright-yellow fw-bold':'text-danger fw-bold'}">${imp}</td><td class="fw-bold">${d.actualTotal.toFixed(2)}</td><td class="fw-bold">${d.cumulativeRemain.toFixed(2)}</td><td style="font-size:0.75rem;">${d.prices}</td></tr>`;
+                    });
                     document.getElementById(tableId).innerHTML = html;
                 };
                 renderWarn('warnBuyDouble', warnings.buyDouble); renderWarn('warnBuyMelt', warnings.buyMelt);
