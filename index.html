@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>不锈钢合约 · 熔断指标计算系统（全功能版）</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+    </script>
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --buy-color: #2563eb;
+            --sell-color: #ea580c;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06);
+            --radius: 12px;
+        }
+        * { box-sizing: border-box; }
+        body {
+            background: var(--bg);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            color: var(--text);
+            min-height: 100vh;
+        }
+        .app-header {
+            background: var(--card-bg); border-bottom: 1px solid var(--border);
+            padding: 16px 0; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow);
+        }
+        .app-header .logo {
+            display: flex; align-items: center; gap: 10px;
+            font-weight: 700; font-size: 1.25rem; color: var(--text); text-decoration: none;
+        }
+        .app-header .logo .icon-circle {
+            width: 40px; height: 40px; border-radius: 10px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.2rem;
+        }
+        .card {
+            background: var(--card-bg); border: 1px solid var(--border);
+            border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden;
+        }
+        .card-header {
+            background: #fafbfc; border-bottom: 1px solid var(--border);
+            padding: 16px 20px; font-weight: 600; font-size: 0.95rem;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .card-body { padding: 20px; }
+        .upload-zone {
+            border: 2px dashed #cbd5e1; border-radius: var(--radius); padding: 36px 20px;
+            text-align: center; cursor: pointer; background: #fafbfc; transition: 0.2s; position: relative;
+        }
+        .upload-zone:hover, .upload-zone.drag-over { border-color: var(--primary); background: #f0f5ff; }
+        .upload-zone.has-file { border-color: #22c55e; background: #f0fdf4; }
+        .upload-zone .upload-icon { font-size: 3rem; color: #94a3b8; margin-bottom: 10px; }
+        .upload-zone.has-file .upload-icon { color: #22c55e; }
+        .upload-zone .upload-text { font-weight: 600; color: var(--text-secondary); font-size: 0.95rem; }
+        .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+        .file-info-box {
+            display: flex; align-items: center; gap: 12px; margin-top: 12px; padding: 12px 16px;
+            background: #f0fdf4; border-radius: 8px; font-weight: 500; font-size: 0.9rem; flex-wrap: wrap;
+        }
+        .file-info-box .remove-btn {
+            margin-left: auto; cursor: pointer; background: #fee2e2; border: none; color: #991b1b;
+            padding: 6px 14px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;
+        }
+        .filter-summary { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+        .filter-chip {
+            display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px;
+            border-radius: 20px; font-size: 0.8rem; font-weight: 600;
+        }
+        .filter-chip.buy { background: #dbeafe; color: #1d4ed8; }
+        .filter-chip.sell { background: #fff7ed; color: #ea580c; }
+        .price-input-group { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .price-chip {
+            display: flex; align-items: center; background: #f1f5f9; border-radius: 30px;
+            padding: 6px 6px 6px 16px; gap: 8px; border: 2px solid transparent;
+        }
+        .price-chip:focus-within { border-color: var(--primary); background: #fff; }
+        .price-chip label { font-weight: 600; font-size: 0.85rem; white-space: nowrap; margin: 0; }
+        .price-chip input {
+            width: 100px; border: none; background: #fff; border-radius: 20px;
+            padding: 6px 12px; font-size: 0.9rem; font-weight: 500; text-align: center; outline: none;
+        }
+        .summary-date { text-align: center; font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+        .table-container { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+        thead th { background: #f8fafc; font-weight: 600; font-size: 0.72rem; color: var(--text-secondary); padding: 8px 6px; border-bottom: 2px solid var(--border); white-space: nowrap; }
+        tbody td { padding: 7px 6px; border-bottom: 1px solid #f1f5f9; white-space: nowrap; }
+        .btn { border-radius: 8px; font-weight: 500; padding: 10px 20px; }
+        .btn-primary { background: var(--primary); border: none; }
+        .btn-outline { border: 2px solid var(--border); background: #fff; }
+        .btn-success { background: #059669; border: none; color: #fff; }
+        .btn-warning { background: #f59e0b; border: none; color: #fff; }
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+        .spinner-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.7); z-index: 9998; justify-content: center; align-items: center;
+        }
+        .spinner-overlay.show { display: flex; }
+        .col-select-area {
+            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+            padding: 12px 16px; margin-top: 10px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+        }
+        .text-warning { color: #f59e0b; }
+        .text-danger { color: #dc2626; }
+        .text-bright-yellow { color: #eab308; }
+        .proprietary-input { width: 80px; text-align: center; padding: 4px; border: 1px solid #d1d5db; border-radius: 4px; }
+        .chart-container { position: relative; width: 100%; min-height: 300px; margin-bottom: 20px; }
+        .chart-row { display: flex; flex-wrap: wrap; gap: 20px; }
+        .chart-box { flex: 1 1 45%; min-width: 350px; background: #fff; border-radius: 8px; padding: 12px; border: 1px solid var(--border); }
+    </style>
+</head>
+<body>
+    <div class="spinner-overlay" id="spinnerOverlay">
+        <div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div>
+        <span class="fw-semibold text-muted">正在计算...</span>
+    </div>
+    <div class="toast-container" id="toastContainer"></div>
+
+    <header class="app-header">
+        <div class="container">
+            <div class="logo">
+                <span class="icon-circle">📊</span>
+                <span>不锈钢合约 · 熔断指标计算系统</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container py-4">
+        <div class="card">
+            <div class="card-header">📁 上传总表 (支持拖拽)</div>
+            <div class="card-body">
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">📁</div>
+                    <p class="upload-text mb-1">点击上传或将Excel文件拖拽到此处</p>
+                    <input type="file" id="fileInput" accept=".xlsx,.xls">
+                </div>
+                <div id="fileInfoArea"></div>
+                <div id="filterSummaryArea" class="filter-summary"></div>
+                <div id="colSelectArea" class="col-select-area" style="display:none;">
+                    <label class="fw-semibold">合约列：</label>
+                    <select id="contractColumnSelect" class="form-select" style="width:auto;">
+                        <option value="">-- 自动检测 --</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" id="priceCard">
+            <div class="card-header">📈 输入当日收盘价</div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <label class="fw-semibold">合约收盘价（元/吨）<span id="contractCountBadge" class="badge bg-secondary ms-2">0个合约</span></label>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline btn-sm" onclick="fillDemoPrices()">演示</button>
+                        <button class="btn btn-outline btn-sm" onclick="clearPrices()">清空</button>
+                        <button class="btn btn-outline btn-sm" onclick="loadLastPrices()">加载上次</button>
+                    </div>
+                </div>
+                <div class="price-input-group" id="priceInputGroup"><div class="text-muted">请先上传总表</div></div>
+            </div>
+        </div>
+
+        <div class="text-center my-4">
+            <button class="btn btn-primary btn-lg px-5 py-3" id="btnCalculate" onclick="calculate()" disabled>开始计算</button>
+            <button class="btn btn-outline btn-lg px-4 py-3 ms-2" id="btnExport" style="display:none;" onclick="exportExcel()">导出Excel</button>
+            <button class="btn btn-outline btn-sm px-3 py-3 ms-2" onclick="resetAll()">重置</button>
+        </div>
+
+        <div id="resultArea" style="display:none;">
+            <div class="card">
+                <div class="card-header">📊 汇总指标 <span class="ms-auto small text-muted" id="calcTime"></span>
+                    <button class="btn btn-success btn-sm ms-2" id="btnSaveData" style="display:none;" onclick="saveTodayData()">💾 保存今日数据</button>
+                </div>
+                <div class="card-body">
+                    <div class="summary-date" id="summaryDateLabel"></div>
+                    <div class="table-container mt-3"><table class="table" id="summaryTable"><thead></thead><tbody></tbody></table></div>
+                    <div class="mt-2 text-end small text-muted">注：单日实际观察量 = 单日理论观察量 + 单日双倍增量</div>
+                    <div class="mt-3" id="fixedPriceSummaryArea"></div>
+                    <div class="mt-3" id="proprietarySummaryArea"></div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">⚠️ 触发价预警（区间宽度=100）</div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="fw-bold text-primary">📈 累购双倍预警 <small>(场外下沿)</small></h6>
+                            <div class="table-container mb-3"><table class="table table-sm" id="warnBuyDouble"><thead></thead><tbody></tbody></table></div>
+                            <h6 class="fw-bold text-danger">📈 累购熔断预警 <small>(场外上沿)</small></h6>
+                            <div class="table-container mb-3"><table class="table table-sm" id="warnBuyMelt"><thead></thead><tbody></tbody></table></div>
+                        </div>
+                        <div class="col-12">
+                            <h6 class="fw-bold text-warning">📉 累沽双倍预警 <small>(场外上沿)</small></h6>
+                            <div class="table-container mb-3"><table class="table table-sm" id="warnSellDouble"><thead></thead><tbody></tbody></table></div>
+                            <h6 class="fw-bold text-danger">📉 累沽熔断预警 <small>(场外下沿)</small></h6>
+                            <div class="table-container mb-3"><table class="table table-sm" id="warnSellMelt"><thead></thead><tbody></tbody></table></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 历史趋势分析 -->
+            <div class="card mt-4" id="historyCard">
+                <div class="card-header">📈 历史趋势分析
+                    <button class="btn btn-outline btn-sm ms-auto" onclick="clearHistory()">🗑 清除历史数据</button>
+                </div>
+                <div class="card-body">
+                    <div class="chart-row">
+                        <div class="chart-box">
+                            <h6 class="text-center">累计未交货量趋势</h6>
+                            <div class="chart-container"><canvas id="chartUnfilled"></canvas></div>
+                        </div>
+                        <div class="chart-box">
+                            <h6 class="text-center">单日实际观察量趋势</h6>
+                            <div class="chart-container"><canvas id="chartActual"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="chart-row">
+                        <div class="chart-box">
+                            <h6 class="text-center">自营剩余持仓量趋势</h6>
+                            <div class="chart-container"><canvas id="chartProp"></canvas></div>
+                        </div>
+                        <div class="chart-box">
+                            <h6 class="text-center">一口价期单趋势</h6>
+                            <div class="chart-container"><canvas id="chartFixedPrice"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="chart-row">
+                        <div class="chart-box">
+                            <h6 class="text-center">预警触发统计趋势</h6>
+                            <div class="chart-container"><canvas id="chartWarnings"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">📋 明细</div>
+                <div class="card-body">
+                    <ul class="nav nav-tabs">
+                        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#panel-buy">累购 <span class="badge bg-primary" id="buyCount">0</span></button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#panel-sell">累沽 <span class="badge bg-warning text-dark" id="sellCount">0</span></button></li>
+                    </ul>
+                    <div class="tab-content pt-3">
+                        <div class="tab-pane fade show active" id="panel-buy"><div class="table-container"><table class="table" id="detailTableBuy"><thead></thead><tbody></tbody></table></div></div>
+                        <div class="tab-pane fade" id="panel-sell"><div class="table-container"><table class="table" id="detailTableSell"><thead></thead><tbody></tbody></table></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script>
+        (function() {
+            let rawAllData = null, filteredBuyData = [], filteredSellData = [], dynamicContracts = [], lastCalc = null;
+            let currentContractColumnKey = null;
+            let fixedPriceData = { totalUnfilled: 0, totalObservation: 0, count: 0 };
+            let proprietaryBuyData = null, proprietarySellData = null, globalWb = null;
+            const HISTORY_KEY = 'melting_index_history';
+            let chartInstances = {};
+
+            function findColumnKey(row, candidates) {
+                if (!row) return null;
+                for (let key of Object.keys(row)) if (candidates.some(c => key.trim() === c || key.includes(c))) return key;
+                return null;
+            }
+            function getNumeric(v) { let n = Number(v); return isNaN(n) ? 0 : n; }
+            function showToast(msg, type='info') {
+                const icons = {success:'✅',danger:'❌',warning:'⚠️',info:'ℹ️'};
+                const div = document.createElement('div');
+                div.className = `alert alert-${type} position-fixed top-0 end-0 m-3`; div.style.zIndex='9999';
+                div.innerHTML = `${icons[type]} ${msg}`;
+                document.body.appendChild(div);
+                setTimeout(() => div.remove(), 3000);
+            }
+
+            function handleFile(file) {
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const wb = XLSX.read(e.target.result, {type:'array'});
+                        globalWb = wb;
+                        const mainSheet = wb.Sheets[wb.SheetNames[0]];
+                        rawAllData = XLSX.utils.sheet_to_json(mainSheet, {defval:null});
+                        if (!rawAllData.length) { showToast('主表无数据','danger'); return; }
+                        parseFixedPriceSheet(wb);
+                        filterData();
+                        document.getElementById('uploadZone').classList.add('has-file');
+                        document.getElementById('uploadZone').querySelector('.upload-icon').textContent = '✅';
+                        document.getElementById('fileInfoArea').innerHTML = `<div class="file-info-box">📄 ${file.name} 共${rawAllData.length}行 <button class="remove-btn" onclick="removeFile()">✕ 移除</button></div>`;
+                        document.getElementById('filterSummaryArea').innerHTML = `
+                            <span class="filter-chip buy">累购 ${filteredBuyData.length}条</span>
+                            <span class="filter-chip sell">累沽 ${filteredSellData.length}条</span>
+                            ${fixedPriceData.count > 0 ? `<span class="filter-chip" style="background:#f3e8ff;color:#6b21a8;">一口价期单 ${fixedPriceData.count}条</span>` : ''}`;
+                        showToast('文件加载成功','success');
+                        lastCalc=null; document.getElementById('resultArea').style.display='none';
+                    } catch(err) { showToast('解析失败: '+err.message,'danger'); }
+                };
+                reader.readAsArrayBuffer(file);
+            }
+
+            const uploadZone = document.getElementById('uploadZone');
+            const fileInput = document.getElementById('fileInput');
+            uploadZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) handleFile(e.target.files[0]); });
+            uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+            uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault(); uploadZone.classList.remove('drag-over');
+                const file = e.dataTransfer.files[0];
+                if (file && file.name.match(/\.(xlsx|xls)$/i)) handleFile(file);
+                else showToast('请上传Excel文件','warning');
+            });
+
+            window.removeFile = function() {
+                rawAllData=null; filteredBuyData=[]; filteredSellData=[]; dynamicContracts=[];
+                fixedPriceData = { totalUnfilled: 0, totalObservation: 0, count: 0 };
+                proprietaryBuyData = null; proprietarySellData = null; globalWb = null;
+                fileInput.value = '';
+                document.getElementById('fileInfoArea').innerHTML = '';
+                document.getElementById('filterSummaryArea').innerHTML = '';
+                uploadZone.classList.remove('has-file');
+                uploadZone.querySelector('.upload-icon').textContent = '📁';
+                renderPriceInputs([]);
+                document.getElementById('resultArea').style.display = 'none';
+                document.getElementById('btnCalculate').disabled = true;
+            };
+
+            function parseFixedPriceSheet(wb) {
+                fixedPriceData = { totalUnfilled: 0, totalObservation: 0, count: 0 };
+                if (wb.SheetNames.length < 2) return;
+                const sheet = wb.Sheets[wb.SheetNames[1]];
+                const json = XLSX.utils.sheet_to_json(sheet, { defval: null });
+                if (!json.length) return;
+                const sample = json[0];
+                const statusKey = findColumnKey(sample, ['状态','执行状态']);
+                const contractQtyKey = findColumnKey(sample, ['合同量','合同量（吨）','合同量(吨)']);
+                const unfilledKey = findColumnKey(sample, ['未交货量','未交货量（吨）','未交货量(吨)']);
+                if (!statusKey || !contractQtyKey || !unfilledKey) return;
+                let totalObs = 0, totalUnfilled = 0, count = 0;
+                json.forEach(row => {
+                    if (String(row[statusKey]||'').trim().includes('执行中')) {
+                        totalObs += getNumeric(row[contractQtyKey]);
+                        totalUnfilled += getNumeric(row[unfilledKey]);
+                        count++;
+                    }
+                });
+                fixedPriceData = { totalUnfilled, totalObservation: totalObs, count };
+            }
+
+            function filterData() {
+                filteredBuyData = []; filteredSellData = [];
+                if (!rawAllData || !rawAllData.length) return;
+                const sample = rawAllData[0];
+                const bizKey = findColumnKey(sample, ['业务类型','业务','业务类别','类型']);
+                const statusKey = findColumnKey(sample, ['状态','当前状态']);
+                if (!currentContractColumnKey) currentContractColumnKey = findColumnKey(sample, ['合约','合同','合约号','代码']);
+                const contractKey = currentContractColumnKey;
+                const baseKey = findColumnKey(sample, ['客户单日基础量','基础量','单日基础量']);
+                const downKey = findColumnKey(sample, ['场外下沿','下沿']);
+                const upKey = findColumnKey(sample, ['场外上沿','上沿']);
+                const unfilledKey = findColumnKey(sample, ['未交货量','未交货']);
+                const remainKey = findColumnKey(sample, ['剩余观察量','剩余观察']);
+                const nameKey = findColumnKey(sample, ['客户名称','客户','客户名','公司名称']);
+
+                if (!bizKey || !statusKey) { showToast('缺少关键列','danger'); return; }
+                const select = document.getElementById('contractColumnSelect');
+                select.innerHTML = '<option value="">-- 自动检测 --</option>';
+                Object.keys(sample).forEach(k => select.innerHTML += `<option value="${k}" ${k===contractKey?'selected':''}>${k}</option>`);
+                document.getElementById('colSelectArea').style.display = 'flex';
+
+                rawAllData.forEach(row => {
+                    const biz = String(row[bizKey]||'').trim();
+                    const status = String(row[statusKey]||'').trim();
+                    if ((biz.includes('累购') || biz.includes('累沽')) && (status.includes('观察中') || status.includes('观察结束'))) {
+                        const isBuy = biz.includes('累购');
+                        const mapped = {
+                            _biz: isBuy ? '累购' : '累沽',
+                            _status: status.includes('观察中') ? '观察中' : '观察结束',
+                            _contractRaw: contractKey ? String(row[contractKey]||'').trim() : '',
+                            _baseQty: getNumeric(baseKey ? row[baseKey] : 0),
+                            _down: getNumeric(downKey ? row[downKey] : null),
+                            _up: getNumeric(upKey ? row[upKey] : null),
+                            _unfilled: getNumeric(unfilledKey ? row[unfilledKey] : 0),
+                            _remain: getNumeric(remainKey ? row[remainKey] : 0),
+                            _name: nameKey ? row[nameKey] : (row['客户名称']||'')
+                        };
+                        if (isBuy) filteredBuyData.push(mapped);
+                        else filteredSellData.push(mapped);
+                    }
+                });
+                const contractSet = new Set();
+                [...filteredBuyData, ...filteredSellData].forEach(r => { if(r._contractRaw) contractSet.add(r._contractRaw); });
+                dynamicContracts = Array.from(contractSet).sort();
+                renderPriceInputs(dynamicContracts);
+                document.getElementById('contractCountBadge').textContent = `${dynamicContracts.length}个合约`;
+                updateCalcButton();
+            }
+
+            document.getElementById('contractColumnSelect').addEventListener('change', function() {
+                currentContractColumnKey = this.value || null;
+                if (rawAllData) { filterData(); lastCalc=null; document.getElementById('resultArea').style.display='none'; }
+            });
+
+            function renderPriceInputs(contracts) {
+                const container = document.getElementById('priceInputGroup');
+                if (!contracts.length) { container.innerHTML = '<div class="text-muted">请先上传总表</div>'; return; }
+                container.innerHTML = contracts.map(c => `<div class="price-chip"><label>${c}</label><input type="number" id="price_${c.replace(/[^a-zA-Z0-9]/g,'_')}" step="0.01" placeholder="收盘价"></div>`).join('');
+                loadLastPrices(true);
+            }
+
+            function getClosePrices() {
+                const prices = {}; let all = true;
+                document.querySelectorAll('#priceInputGroup input').forEach(inp => {
+                    const v = parseFloat(inp.value);
+                    if (!isNaN(v) && v>=0) prices[inp.id.replace('price_','')] = v; else all = false;
+                });
+                return { prices, allFilled: all && Object.keys(prices).length === dynamicContracts.length };
+            }
+
+            window.fillDemoPrices = () => {
+                dynamicContracts.forEach((c,i) => {
+                    const el = document.getElementById('price_'+c.replace(/[^a-zA-Z0-9]/g,'_'));
+                    if(el) el.value = (12800 + i*20).toFixed(2);
+                });
+                savePrices(); updateCalcButton();
+            };
+            window.clearPrices = () => {
+                document.querySelectorAll('#priceInputGroup input').forEach(i=>i.value='');
+                localStorage.removeItem('lastPrices'); updateCalcButton();
+            };
+            function savePrices() { const {prices} = getClosePrices(); if(Object.keys(prices).length) localStorage.setItem('lastPrices', JSON.stringify(prices)); }
+            window.loadLastPrices = (silent=false) => {
+                const saved = localStorage.getItem('lastPrices');
+                if(!saved) { if(!silent) showToast('无历史价格','warning'); return; }
+                try {
+                    const data = JSON.parse(saved);
+                    Object.entries(data).forEach(([c,v]) => {
+                        const el = document.getElementById('price_'+c.replace(/[^a-zA-Z0-9]/g,'_'));
+                        if(el) el.value = v;
+                    });
+                    if(!silent) showToast('已加载上次价格','success');
+                } catch(e) {}
+                updateCalcButton();
+            };
+            function updateCalcButton() {
+                const has = filteredBuyData.length+filteredSellData.length > 0;
+                const {allFilled} = getClosePrices();
+                document.getElementById('btnCalculate').disabled = !(has && dynamicContracts.length && allFilled);
+            }
+            document.addEventListener('input', e => {
+                if(e.target.closest('#priceInputGroup input')) { updateCalcButton(); lastCalc=null; document.getElementById('resultArea').style.display='none'; }
+            });
+
+            function getModeBases(dataList) {
+                const freq = {}; let maxCount = 0, mode = 11;
+                dataList.filter(r => r._status === '观察中').forEach(r => {
+                    const b = getNumeric(r._baseQty);
+                    freq[b] = (freq[b] || 0) + 1;
+                    if (freq[b] > maxCount) { maxCount = freq[b]; mode = b; }
+                });
+                return mode;
+            }
+            function buildCumulativeBands(dataList, priceField, baseField, totalTheoretical, totalRemain, isDouble, modeBase) {
+                const items = dataList.filter(r => r._status === '观察中' && !isNaN(r[priceField]));
+                if (!items.length) return [];
+                const prices = items.map(r => r[priceField]);
+                const step = 100;
+                const min = Math.floor(Math.min(...prices) / step) * step;
+                const max = Math.ceil(Math.max(...prices) / step) * step;
+                const bandCount = Math.ceil((max - min) / step);
+                const bands = Array.from({ length: bandCount }, (_, i) => ({
+                    lower: min + i * step, upper: min + (i + 1) * step, count: 0, totalBase: 0, totalRemain: 0, prices: []
+                }));
+                items.forEach(r => {
+                    const price = r[priceField], base = getNumeric(r[baseField]), remain = getNumeric(r._remain);
+                    let idx = Math.floor((price - min) / step);
+                    if (idx > 0 && idx < bandCount && price === bands[idx].lower) idx--;
+                    if (idx >= 0 && idx < bandCount) {
+                        bands[idx].count++; bands[idx].totalBase += base; bands[idx].totalRemain += remain;
+                        bands[idx].prices.push({ price, base, isSpecial: (base !== modeBase) });
+                    }
+                });
+                let cumulativeCount = 0, cumulativeBase = 0, cumulativeRemainDelta = 0;
+                const result = [];
+                const processBands = (bandsArray, reverseOrder) => {
+                    (reverseOrder ? [...bandsArray].reverse() : bandsArray).forEach(band => {
+                        cumulativeCount += band.count; cumulativeBase += band.totalBase; cumulativeRemainDelta += band.totalRemain;
+                        if (band.count > 0 || cumulativeCount > 0) {
+                            const priceStr = band.prices.map(p => p.isSpecial ? `${p.price.toFixed(2)}(${p.base}吨)` : p.price.toFixed(2)).join(', ');
+                            const entry = {
+                                range: `${band.lower}-${band.upper}`, count: band.count, cumulativeCount,
+                                cumulativeImpact: isDouble ? cumulativeBase : -cumulativeBase,
+                                actualTotal: isDouble ? totalTheoretical + cumulativeBase : totalTheoretical - cumulativeBase,
+                                cumulativeRemain: isDouble ? totalRemain + cumulativeRemainDelta : totalRemain - cumulativeRemainDelta,
+                                prices: priceStr
+                            };
+                            if (reverseOrder) result.unshift(entry); else result.push(entry);
+                        }
+                    });
+                };
+                if (!isDouble) { if (priceField === '_up') processBands(bands, false); else processBands(bands, true); }
+                else { if (priceField === '_down') processBands(bands, true); else processBands(bands, false); }
+                return result;
+            }
+            function computeWarnings() {
+                const buyOngoing = filteredBuyData.filter(r => r._status === '观察中');
+                const sellOngoing = filteredSellData.filter(r => r._status === '观察中');
+                const buyMode = getModeBases(filteredBuyData), sellMode = getModeBases(filteredSellData);
+                const buyTheo = buyOngoing.reduce((s,r) => s + getNumeric(r._baseQty), 0);
+                const sellTheo = sellOngoing.reduce((s,r) => s + getNumeric(r._baseQty), 0);
+                const buyRem = buyOngoing.reduce((s,r) => s + getNumeric(r._remain), 0);
+                const sellRem = sellOngoing.reduce((s,r) => s + getNumeric(r._remain), 0);
+                return {
+                    buyDouble: buildCumulativeBands(filteredBuyData, '_down', '_baseQty', buyTheo, buyRem, true, buyMode),
+                    buyMelt: buildCumulativeBands(filteredBuyData, '_up', '_baseQty', buyTheo, buyRem, false, buyMode),
+                    sellDouble: buildCumulativeBands(filteredSellData, '_up', '_baseQty', sellTheo, sellRem, true, sellMode),
+                    sellMelt: buildCumulativeBands(filteredSellData, '_down', '_baseQty', sellTheo, sellRem, false, sellMode)
+                };
+            }
+            function calcTheory(data, thresholdField, triggerFn, prices) {
+                let actual=0, theo=0, inc=0;
+                const details = data.map(r => {
+                    const base = getNumeric(r._baseQty), threshold = thresholdField==='_down' ? getNumeric(r._down) : getNumeric(r._up);
+                    const price = prices[r._contractRaw] ?? null;
+                    let tQty=0, dInc=0, triggered=false;
+                    if (r._status==='观察中') { tQty=base; if (price!=null && !isNaN(threshold) && triggerFn(price, threshold)) { triggered=true; dInc=base; } }
+                    actual += tQty + dInc; theo += tQty; inc += dInc;
+                    return { name: (r._name||''), contract: r._contractRaw, status: r._status, base, threshold, price, triggered, tQty, dInc, actual: tQty+dInc, unfilled: getNumeric(r._unfilled), remain: getNumeric(r._remain) };
+                });
+                return { totalActual: actual, totalTheoretical: theo, totalDoubleIncrement: inc, details };
+            }
+
+            function parseProprietarySheet(wb) {
+                proprietaryBuyData = null; proprietarySellData = null;
+                if (wb.SheetNames.length < 3) return;
+                const sheet = wb.Sheets[wb.SheetNames[2]];
+                const json = XLSX.utils.sheet_to_json(sheet, { defval: null });
+                if (!json.length) return;
+                const sample = json[0];
+                const statusKey = findColumnKey(sample, ['状态']);
+                const institutionKey = findColumnKey(sample, ['场外机构']);
+                const contractKey = findColumnKey(sample, ['合约']);
+                const baseKey = findColumnKey(sample, ['场外单日基础量']);
+                const lowerKey = findColumnKey(sample, ['下沿/行权价']);
+                const upperKey = findColumnKey(sample, ['上沿/行权价']);
+                const positionKey = findColumnKey(sample, ['持仓量']);
+                const remainKey = findColumnKey(sample, ['剩余持仓量']);
+                const remDaysKey = findColumnKey(sample, ['剩余天数']);
+                const typeKey = findColumnKey(sample, ['期权类型']);
+                if (!statusKey || !institutionKey || !contractKey || !baseKey || !lowerKey || !positionKey || !remainKey || !remDaysKey || !typeKey) return;
+                const buyInst = {}, sellInst = {};
+                json.forEach(row => {
+                    if (!String(row[statusKey]||'').trim().includes('观察中')) return;
+                    const inst = String(row[institutionKey]||'').trim();
+                    const type = String(row[typeKey]||'').trim();
+                    const item = {
+                        contract: String(row[contractKey]||'').trim(),
+                        baseQty: getNumeric(row[baseKey]), lower: getNumeric(row[lowerKey]),
+                        upper: getNumeric(row[upperKey]), position: getNumeric(row[positionKey]),
+                        remain: getNumeric(row[remainKey]), remDays: getNumeric(row[remDaysKey])
+                    };
+                    if (type.includes('累购')) { if (!buyInst[inst]) buyInst[inst] = []; buyInst[inst].push(item); }
+                    else if (type.includes('累沽')) { if (!sellInst[inst]) sellInst[inst] = []; sellInst[inst].push(item); }
+                });
+                if (Object.keys(buyInst).length) proprietaryBuyData = { institutions: buyInst };
+                if (Object.keys(sellInst).length) proprietarySellData = { institutions: sellInst };
+            }
+
+            function computeProprietarySummary(proData, isBuy, prices) {
+                if (!proData) return null;
+                const summary = {};
+                for (const [inst, items] of Object.entries(proData.institutions)) {
+                    let yesterdayRemain = 0, todayAdded = 0, estimatedObs = 0;
+                    let hasDouble = false;
+                    const triggerPrices = [];
+                    items.forEach(item => {
+                        yesterdayRemain += item.remain;
+                        const price = prices[item.contract];
+                        let added = item.baseQty, isDouble = false, isMelt = false;
+                        if (price != null) {
+                            if (isBuy) {
+                                if (!isNaN(item.upper) && price >= item.upper) { added = 0; isMelt = true; }
+                                else if (!isNaN(item.lower) && price <= item.lower) { added = item.baseQty * 2; isDouble = true; }
+                            } else {
+                                if (!isNaN(item.upper) && price >= item.upper) { added = item.baseQty * 2; isDouble = true; }
+                                else if (!isNaN(item.lower) && price <= item.lower) { added = 0; isMelt = true; }
+                            }
+                        }
+                        todayAdded += added;
+                        const remAfter = Math.max(0, item.remDays - 1);
+                        let itemEst = 0;
+                        if (isMelt) itemEst = 0;
+                        else if (isDouble) { itemEst = remAfter * item.baseQty * 1.5; hasDouble = true; }
+                        else itemEst = remAfter * item.baseQty;
+                        estimatedObs += itemEst;
+                        const tp = isBuy ? item.lower : item.upper;
+                        if (!isNaN(tp)) triggerPrices.push(tp.toFixed(2));
+                    });
+                    const prefix = isBuy ? 'buy' : 'sell';
+                    const flatInput = document.getElementById(`propFlat_${prefix}_${inst}`);
+                    const todayFlat = flatInput ? parseFloat(flatInput.value) || 0 : 0;
+                    const todayRemain = yesterdayRemain + todayAdded - todayFlat;
+                    summary[inst] = { count: items.length, yesterdayRemain, todayAdded, todayFlat, todayRemain, change: todayRemain - yesterdayRemain, estimatedObs, hasDouble, triggerPrices: triggerPrices.join(', ') };
+                }
+                return summary;
+            }
+
+            function renderProprietaryTable(containerId, proData, isBuy, prices, title, triggerPriceLabel) {
+                const container = document.getElementById(containerId);
+                const summary = computeProprietarySummary(proData, isBuy, prices);
+                if (!summary || !Object.keys(summary).length) { container.innerHTML = ''; return; }
+                const prefix = isBuy ? 'buy' : 'sell';
+                let html = `<div class="mt-3"><strong>🏢 ${title}</strong></div>`;
+                html += `<div class="table-container mt-2"><table class="table table-sm"><thead><tr>
+                    <th>场外机构</th><th>笔数</th><th>${triggerPriceLabel}</th><th>昨日剩余持仓</th><th>今日新增持仓</th><th>今日平仓量</th><th>今日剩余持仓</th><th>剩余持仓较昨日增减</th><th>预估剩余观察量</th></tr></thead><tbody>`;
+                let tc=0, ty=0, ta=0, tf=0, tr=0, te=0, thd=false;
+                for (const [inst, data] of Object.entries(summary)) {
+                    const fid = `propFlat_${prefix}_${inst}`;
+                    const ed = data.estimatedObs.toFixed(2) + (data.hasDouble ? ' <small class="text-warning">(含双倍折中)</small>' : '');
+                    html += `<tr><td><strong>${inst}</strong></td><td>${data.count}</td><td>${data.triggerPrices||'-'}</td><td>${data.yesterdayRemain.toFixed(2)}</td><td class="${data.todayAdded>0?'text-bright-yellow fw-bold':''}">${data.todayAdded.toFixed(2)}</td><td><input type="number" class="proprietary-input" id="${fid}" value="${data.todayFlat}" step="0.01" onchange="updateProprietarySummary()"></td><td class="fw-bold">${data.todayRemain.toFixed(2)}</td><td class="${data.change>=0?'text-success':'text-danger'}">${data.change>=0?'+':''}${data.change.toFixed(2)}</td><td>${ed}</td></tr>`;
+                    tc+=data.count; ty+=data.yesterdayRemain; ta+=data.todayAdded; tf+=data.todayFlat; tr+=data.todayRemain; te+=data.estimatedObs;
+                    if (data.hasDouble) thd=true;
+                }
+                const tch = tr - ty;
+                const ted = te.toFixed(2) + (thd ? ' <small class="text-warning">(含双倍折中)</small>' : '');
+                html += `<tr style="font-weight:700; border-top:2px solid #64748b; background:#f8fafc"><td>总计</td><td>${tc}</td><td>-</td><td>${ty.toFixed(2)}</td><td>${ta.toFixed(2)}</td><td>${tf.toFixed(2)}</td><td>${tr.toFixed(2)}</td><td class="${tch>=0?'text-success':'text-danger'}">${tch>=0?'+':''}${tch.toFixed(2)}</td><td>${ted}</td></tr>`;
+                html += `</tbody></table></div>`;
+                container.innerHTML = html;
+            }
+
+            function renderAllProprietary() {
+                const area = document.getElementById('proprietarySummaryArea');
+                if ((!proprietaryBuyData && !proprietarySellData) || !lastCalc) { area.innerHTML = '<div class="text-muted small mt-2">未检测到自营业务数据</div>'; return; }
+                area.innerHTML = '';
+                const prices = lastCalc.prices;
+                if (proprietaryBuyData) { const divId = 'propBuyTable'; area.innerHTML += `<div id="${divId}"></div>`; renderProprietaryTable(divId, proprietaryBuyData, true, prices, '累购自营业务汇总', '场外下沿（双倍触发价）'); }
+                if (proprietarySellData) { const divId = 'propSellTable'; area.innerHTML += `<div id="${divId}" style="margin-top:20px;"></div>`; renderProprietaryTable(divId, proprietarySellData, false, prices, '累沽自营业务汇总', '场外上沿（双倍触发价）'); }
+                area.innerHTML += `<button class="btn btn-sm btn-outline mt-2" onclick="updateProprietarySummary()">🔄 刷新自营数据</button>`;
+            }
+
+            window.updateProprietarySummary = function() {
+                if (!lastCalc) return;
+                const prices = lastCalc.prices;
+                if (proprietaryBuyData) renderProprietaryTable('propBuyTable', proprietaryBuyData, true, prices, '累购自营业务汇总', '场外下沿（双倍触发价）');
+                if (proprietarySellData) renderProprietaryTable('propSellTable', proprietarySellData, false, prices, '累沽自营业务汇总', '场外上沿（双倍触发价）');
+            };
+
+            // ==================== 数据存储与图表 ====================
+            function getHistoryData() {
+                try {
+                    const raw = localStorage.getItem(HISTORY_KEY);
+                    return raw ? JSON.parse(raw) : [];
+                } catch(e) { return []; }
+            }
+
+            function saveHistoryData(dataArray) {
+                localStorage.setItem(HISTORY_KEY, JSON.stringify(dataArray));
+            }
+
+            window.saveTodayData = function() {
+                if (!lastCalc) { showToast('请先完成计算','warning'); return; }
+                const today = new Date().toISOString().slice(0,10);
+                const history = getHistoryData();
+
+                // 检查是否已存在
+                const existingIdx = history.findIndex(h => h.date === today);
+                if (existingIdx >= 0) {
+                    if (!confirm(`日期 ${today} 的数据已存在，是否覆盖？`)) return;
+                    history.splice(existingIdx, 1);
+                }
+
+                const buy = lastCalc.buyRes, sell = lastCalc.sellRes, warnings = lastCalc.warnings;
+                const fp = fixedPriceData;
+
+                // 计算自营汇总
+                let propBuyTotalRemain = 0, propSellTotalRemain = 0;
+                if (proprietaryBuyData) {
+                    const buySummary = computeProprietarySummary(proprietaryBuyData, true, lastCalc.prices);
+                    if (buySummary) Object.values(buySummary).forEach(d => propBuyTotalRemain += d.todayRemain);
+                }
+                if (proprietarySellData) {
+                    const sellSummary = computeProprietarySummary(proprietarySellData, false, lastCalc.prices);
+                    if (sellSummary) Object.values(sellSummary).forEach(d => propSellTotalRemain += d.todayRemain);
+                }
+
+                // 预警统计
+                let buyDoubleTotal = 0, buyMeltTotal = 0, sellDoubleTotal = 0, sellMeltTotal = 0;
+                warnings.buyDouble.forEach(b => buyDoubleTotal += b.count);
+                warnings.buyMelt.forEach(b => buyMeltTotal += b.count);
+                warnings.sellDouble.forEach(b => sellDoubleTotal += b.count);
+                warnings.sellMelt.forEach(b => sellMeltTotal += b.count);
+
+                const record = {
+                    date: today,
+                    buyUnfilled: buy.totalUnfilled,
+                    sellUnfilled: sell.totalUnfilled,
+                    buyActualDaily: buy.totalActual,
+                    sellActualDaily: sell.totalActual,
+                    buyTheoretical: buy.totalTheoretical,
+                    sellTheoretical: sell.totalTheoretical,
+                    buyDoubleIncrement: buy.totalDoubleIncrement,
+                    sellDoubleIncrement: sell.totalDoubleIncrement,
+                    buyRemainObs: buy.totalRemain,
+                    sellRemainObs: sell.totalRemain,
+                    fixedPriceUnfilled: fp.totalUnfilled,
+                    fixedPriceTotalQty: fp.totalObservation,
+                    fixedPriceCount: fp.count,
+                    propBuyTotalRemain,
+                    propSellTotalRemain,
+                    buyDoubleTotal,
+                    buyMeltTotal,
+                    sellDoubleTotal,
+                    sellMeltTotal,
+                    totalPropRemain: propBuyTotalRemain + propSellTotalRemain,
+                };
+
+                history.push(record);
+                // 按日期排序
+                history.sort((a, b) => a.date.localeCompare(b.date));
+                saveHistoryData(history);
+                showToast(`今日数据已保存！(共${history.length}条记录)`,'success');
+                renderCharts(history);
+            };
+
+            function renderCharts(history) {
+                if (!history || history.length === 0) return;
+                const labels = history.map(h => h.date.slice(5)); // MM-DD 格式
+
+                // 销毁旧图表
+                Object.values(chartInstances).forEach(c => c.destroy());
+                chartInstances = {};
+
+                // 图表1：累计未交货量
+                const ctx1 = document.getElementById('chartUnfilled').getContext('2d');
+                chartInstances.chart1 = new Chart(ctx1, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [
+                            { label: '累购', data: history.map(h => h.buyUnfilled), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.1)', tension: 0.3, fill: true },
+                            { label: '累沽', data: history.map(h => h.sellUnfilled), borderColor: '#ea580c', backgroundColor: 'rgba(234,88,12,0.1)', tension: 0.3, fill: true }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: false } } }
+                });
+
+                // 图表2：单日实际观察量
+                const ctx2 = document.getElementById('chartActual').getContext('2d');
+                chartInstances.chart2 = new Chart(ctx2, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [
+                            { label: '累购', data: history.map(h => h.buyActualDaily), borderColor: '#2563eb', tension: 0.3 },
+                            { label: '累沽', data: history.map(h => h.sellActualDaily), borderColor: '#ea580c', tension: 0.3 }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: false } } }
+                });
+
+                // 图表3：自营剩余持仓量
+                const ctx3 = document.getElementById('chartProp').getContext('2d');
+                chartInstances.chart3 = new Chart(ctx3, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [
+                            { label: '累购自营', data: history.map(h => h.propBuyTotalRemain), borderColor: '#2563eb', tension: 0.3 },
+                            { label: '累沽自营', data: history.map(h => h.propSellTotalRemain), borderColor: '#ea580c', tension: 0.3 },
+                            { label: '自营总计', data: history.map(h => h.totalPropRemain), borderColor: '#059669', tension: 0.3, borderDash: [5,5] }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: false } } }
+                });
+
+                // 图表4：一口价期单
+                const ctx4 = document.getElementById('chartFixedPrice').getContext('2d');
+                chartInstances.chart4 = new Chart(ctx4, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [
+                            { label: '累计未交货量', data: history.map(h => h.fixedPriceUnfilled), borderColor: '#7c3aed', tension: 0.3 },
+                            { label: '累计合同量', data: history.map(h => h.fixedPriceTotalQty), borderColor: '#059669', tension: 0.3 }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: false } } }
+                });
+
+                // 图表5：预警触发统计
+                const ctx5 = document.getElementById('chartWarnings').getContext('2d');
+                chartInstances.chart5 = new Chart(ctx5, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [
+                            { label: '累购双倍', data: history.map(h => h.buyDoubleTotal), borderColor: '#f59e0b', tension: 0.3 },
+                            { label: '累购熔断', data: history.map(h => h.buyMeltTotal), borderColor: '#dc2626', tension: 0.3 },
+                            { label: '累沽双倍', data: history.map(h => h.sellDoubleTotal), borderColor: '#eab308', tension: 0.3 },
+                            { label: '累沽熔断', data: history.map(h => h.sellMeltTotal), borderColor: '#ef4444', tension: 0.3 }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+                });
+            }
+
+            window.clearHistory = function() {
+                if (confirm('确定要清除所有历史数据吗？此操作不可恢复！')) {
+                    localStorage.removeItem(HISTORY_KEY);
+                    Object.values(chartInstances).forEach(c => c.destroy());
+                    chartInstances = {};
+                    showToast('历史数据已清除','info');
+                }
+            };
+
+            function loadAndRenderCharts() {
+                const history = getHistoryData();
+                if (history.length > 0) {
+                    renderCharts(history);
+                }
+            }
+
+            window.calculate = function() {
+                const {prices, allFilled} = getClosePrices();
+                if (!allFilled) return showToast('请完整填写收盘价','warning');
+                document.getElementById('spinnerOverlay').classList.add('show');
+                setTimeout(() => {
+                    let buyRes = { totalActual:0, totalTheoretical:0, totalDoubleIncrement:0, details:[], totalUnfilled:0, totalRemain:0 };
+                    let sellRes = { ...buyRes };
+                    if (filteredBuyData.length) {
+                        const r = calcTheory(filteredBuyData, '_down', (p,t) => p<=t, prices);
+                        buyRes = {...r, totalUnfilled: filteredBuyData.reduce((s,x)=>s+getNumeric(x._unfilled),0), totalRemain: filteredBuyData.reduce((s,x)=>s+getNumeric(x._remain),0)};
+                    }
+                    if (filteredSellData.length) {
+                        const r = calcTheory(filteredSellData, '_up', (p,t) => p>=t, prices);
+                        sellRes = {...r, totalUnfilled: filteredSellData.reduce((s,x)=>s+getNumeric(x._unfilled),0), totalRemain: filteredSellData.reduce((s,x)=>s+getNumeric(x._remain),0)};
+                    }
+                    if (globalWb) parseProprietarySheet(globalWb);
+                    const warnings = computeWarnings();
+                    lastCalc = {buyRes, sellRes, warnings, prices};
+                    renderResult(buyRes, sellRes, warnings);
+                    renderAllProprietary();
+                    document.getElementById('spinnerOverlay').classList.remove('show');
+                    document.getElementById('resultArea').style.display = 'block';
+                    document.getElementById('btnExport').style.display = 'inline-block';
+                    document.getElementById('btnSaveData').style.display = 'inline-block';
+                    document.getElementById('calcTime').textContent = new Date().toLocaleString();
+                    savePrices();
+                    loadAndRenderCharts();
+                }, 100);
+            };
+
+            function renderResult(buy, sell, warnings) {
+                const now = new Date();
+                document.getElementById('summaryDateLabel').textContent = `📅 ${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
+                document.getElementById('summaryTable').querySelector('thead').innerHTML = `<tr><th>业务类型</th><th>累计未交货量(吨)</th><th>累计剩余观察量(吨)</th><th>单日实际观察量(吨)</th><th>单日理论观察量(吨)</th><th>单日双倍增量(吨)</th></tr>`;
+                document.getElementById('summaryTable').querySelector('tbody').innerHTML = `
+                    <tr style="background:#eff6ff"><td><strong>累购</strong></td><td>${buy.totalUnfilled.toFixed(2)}</td><td>${buy.totalRemain.toFixed(2)}</td><td class="fw-bold">${buy.totalActual.toFixed(2)}</td><td>${buy.totalTheoretical.toFixed(2)}</td><td class="${buy.totalDoubleIncrement>0?'text-warning fw-bold':''}">${buy.totalDoubleIncrement.toFixed(2)}</td></tr>
+                    <tr style="background:#fff7ed"><td><strong>累沽</strong></td><td>${sell.totalUnfilled.toFixed(2)}</td><td>${sell.totalRemain.toFixed(2)}</td><td class="fw-bold">${sell.totalActual.toFixed(2)}</td><td>${sell.totalTheoretical.toFixed(2)}</td><td class="${sell.totalDoubleIncrement>0?'text-warning fw-bold':''}">${sell.totalDoubleIncrement.toFixed(2)}</td></tr>`;
+                const fp = fixedPriceData;
+                document.getElementById('fixedPriceSummaryArea').innerHTML = fp.count > 0 ? `
+                    <div class="table-container mt-2"><table class="table"><thead><tr><th>业务类型</th><th>累计未交货量(吨)</th><th>累计合同量(吨)</th><th>执行中单数</th></tr></thead>
+                    <tbody><tr style="background:#f3e8ff;"><td><strong>一口价期单</strong></td><td>${fp.totalUnfilled.toFixed(2)}</td><td>${fp.totalObservation.toFixed(2)}</td><td>${fp.count}</td></tr></tbody></table></div>` : '<div class="text-muted small mt-2">未检测到一口价期单数据</div>';
+                const renderWarn = (tableId, data) => {
+                    if (!data.length) { document.getElementById(tableId).innerHTML = '<thead></thead><tbody><tr><td colspan="7" class="text-center text-muted">暂无数据</td></tr></tbody>'; return; }
+                    let html = '<tr><th>价格区间</th><th>新增</th><th>累计合约</th><th>累计影响(吨)</th><th>累计后实际单日观察量（吨）</th><th>累计剩余观察量(吨)</th><th>具体触发价格</th></tr>';
+                    data.forEach(d => {
+                        const imp = d.cumulativeImpact >= 0 ? `+${d.cumulativeImpact.toFixed(2)}` : d.cumulativeImpact.toFixed(2);
+                        html += `<tr><td>${d.range}</td><td>${d.count}</td><td class="fw-bold">${d.cumulativeCount}</td><td class="${d.cumulativeImpact>=0?'text-bright-yellow fw-bold':'text-danger fw-bold'}">${imp}</td><td class="fw-bold">${d.actualTotal.toFixed(2)}</td><td class="fw-bold">${d.cumulativeRemain.toFixed(2)}</td><td style="font-size:0.75rem;">${d.prices}</td></tr>`;
+                    });
+                    document.getElementById(tableId).innerHTML = html;
+                };
+                renderWarn('warnBuyDouble', warnings.buyDouble); renderWarn('warnBuyMelt', warnings.buyMelt);
+                renderWarn('warnSellDouble', warnings.sellDouble); renderWarn('warnSellMelt', warnings.sellMelt);
+                document.getElementById('buyCount').textContent = buy.details.length;
+                document.getElementById('sellCount').textContent = sell.details.length;
+                const cols = ['客户','合约','状态','基础量','阈值','收盘价','触发','实际量','理论量','双倍增量','未交货','剩余观察'];
+                const renderDetail = (id, data, thLabel) => {
+                    document.getElementById(id).querySelector('thead').innerHTML = `<tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr>`;
+                    document.getElementById(id).querySelector('tbody').innerHTML = data.details.map(d => `<tr class="${d.status==='观察结束'?'row-ended':(d.triggered?'row-triggered':'')}"><td>${d.name||'未知'}</td><td><code>${d.contract}</code></td><td><span class="badge-status">${d.status}</span></td><td>${d.base.toFixed(2)}</td><td>${d.threshold!=null?d.threshold.toFixed(2):'-'}<small>(${thLabel})</small></td><td>${d.price!=null?d.price.toFixed(2):'无'}</td><td>${d.triggered?'⚠双倍':'否'}</td><td class="fw-bold">${d.actual.toFixed(2)}</td><td>${d.tQty.toFixed(2)}</td><td>${d.dInc.toFixed(2)}</td><td>${d.unfilled.toFixed(2)}</td><td>${d.remain.toFixed(2)}</td></tr>`).join('');
+                };
+                renderDetail('detailTableBuy', buy, '下沿'); renderDetail('detailTableSell', sell, '上沿');
+            }
+
+            window.exportExcel = function() {
+                if (!lastCalc) return showToast('请先计算','warning');
+                const {buyRes, sellRes, warnings} = lastCalc;
+                const wb = XLSX.utils.book_new();
+                const sum = [['业务类型','累计未交货量','累计剩余观察量','单日实际观察量','单日理论观察量','单日双倍增量'], ['累购',buyRes.totalUnfilled,buyRes.totalRemain,buyRes.totalActual,buyRes.totalTheoretical,buyRes.totalDoubleIncrement], ['累沽',sellRes.totalUnfilled,sellRes.totalRemain,sellRes.totalActual,sellRes.totalTheoretical,sellRes.totalDoubleIncrement]];
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sum), '汇总');
+                if (fixedPriceData.count > 0) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['业务类型','累计未交货量','累计合同量','执行中单数'], ['一口价期单', fixedPriceData.totalUnfilled, fixedPriceData.totalObservation, fixedPriceData.count]]), '一口价期单');
+                XLSX.writeFile(wb, `熔断预警_${new Date().toISOString().slice(0,10)}.xlsx`);
+                showToast('导出成功','success');
+            };
+
+            window.resetAll = function() {
+                rawAllData=null; filteredBuyData=[]; filteredSellData=[]; dynamicContracts=[]; lastCalc=null;
+                fixedPriceData = { totalUnfilled: 0, totalObservation: 0, count: 0 };
+                proprietaryBuyData = null; proprietarySellData = null; globalWb = null;
+                fileInput.value = '';
+                document.getElementById('fileInfoArea').innerHTML = '';
+                document.getElementById('filterSummaryArea').innerHTML = '';
+                uploadZone.classList.remove('has-file');
+                uploadZone.querySelector('.upload-icon').textContent = '📁';
+                renderPriceInputs([]);
+                document.getElementById('resultArea').style.display = 'none';
+                document.getElementById('btnCalculate').disabled = true;
+                localStorage.removeItem('lastPrices');
+            };
+
+            document.addEventListener('DOMContentLoaded', () => {
+                renderPriceInputs([]);
+                document.getElementById('btnCalculate').disabled = true;
+                loadAndRenderCharts();
+            });
+        })();
+    </script>
+</body>
+</html>
